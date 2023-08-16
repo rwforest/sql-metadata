@@ -4,6 +4,30 @@ Module contains internal SQLToken that creates linked list
 from typing import Dict, List, Union
 
 import sqlparse.sql
+import sqlparse
+sqlparse.keywords.KEYWORDS.update({
+    "VACUUM": sqlparse.tokens.Keyword,
+    "RETAIN": sqlparse.tokens.Keyword,
+    "DRY RUN": sqlparse.tokens.Keyword,
+    "DESC": sqlparse.tokens.Keyword,
+    "DESCRIBE": sqlparse.tokens.Keyword,
+    "DETAIL": sqlparse.tokens.Keyword,
+    "GENERATE": sqlparse.tokens.Keyword,
+    "HISTORY": sqlparse.tokens.Keyword,
+    "CONVERT TO DELTA": sqlparse.tokens.Keyword,
+    "NO STATISTICS": sqlparse.tokens.Keyword,
+    "PARTITIONED BY": sqlparse.tokens.Keyword,
+    "RESTORE": sqlparse.tokens.Keyword,
+    "ALTER TABLE": sqlparse.tokens.Keyword,
+    "ADD CONSTRAINT": sqlparse.tokens.Keyword,
+    "DROP CONSTRAINT": sqlparse.tokens.Keyword,
+    "OPTIMIZE": sqlparse.tokens.Keyword,
+    "REORG": sqlparse.tokens.Keyword,
+    "SHOW COLUMNS": sqlparse.tokens.Keyword,
+    "SHALLOW CLONE": sqlparse.tokens.Keyword,
+    "TBLPROPERTIES": sqlparse.tokens.Keyword,
+    "LOCATION": sqlparse.tokens.Keyword
+})
 from sqlparse.tokens import Comment, Name, Number, Punctuation, Wildcard, Keyword
 
 from sql_metadata.keywords_lists import (
