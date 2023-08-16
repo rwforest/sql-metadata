@@ -339,19 +339,30 @@ class Parser:  # pylint: disable=R0902
         """
         Return the list of tables this query refers to
         """
-        if self._tables is not None:
-            
+        if self._tables is not None:            
             # Delta-specific commands table extraction
-            for pattern in ['VACUUM\\s+', '(DESC|DESCRIBE)\\s+DETAIL\\s+', 'GENERATE\\s+\\w+\\s+FOR\\s+TABLE\\s+', 'CONVERT\\s+TO\\s+DELTA\\s+', 'OPTIMIZE\\s+']:
+        if self._tables is not None:
+            for pattern in [
+                "VACUUM\\s+",
+                "(DESC|DESCRIBE)\\s+DETAIL\\s+",
+                "GENERATE\\s+\\w+\\s+FOR\\s+TABLE\\s+",
+                "CONVERT\\s+TO\\s+DELTA\\s+",
+                "OPTIMIZE\\s+",
+            ]:
                 match = re.search(pattern, self._raw_query)
                 if match:
+                    token_position = match.end()
+                    table_token = self._not_parsed_tokens[token_position]
+                if table_token and table_token.is_potential_table_name:
+                    table_name = str(table_token.value.strip("`"))
+                    table_token.token_type = TokenType.TABLE
+                    tables.append(table_name)
                     token_position = match.end()
                     table_token = self._not_parsed_tokens[token_position]
                     if table_token and table_token.is_potential_table_name:
                         table_name = str(table_token.value.strip("`"))
                         table_token.token_type = TokenType.TABLE
                         tables.append(table_name)
-
         return self._tables
         tables = UniqueList()
         with_names = self.with_names
