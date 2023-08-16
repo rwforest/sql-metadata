@@ -340,42 +340,19 @@ class Parser:  # pylint: disable=R0902
         Return the list of tables this query refers to
         """
         if self._tables is not None:
-            for pattern in [
-                "VACUUM\\s+",
-                "(DESC|DESCRIBE)\\s+DETAIL\\s+",
-                "GENERATE\\s+\\w+\\s+FOR\\s+TABLE\\s+",
-                "CONVERT\\s+TO\\s+DELTA\\s+",
-                "OPTIMIZE\\s+",
-            ]:
-                match = re.search(pattern, self._raw_query)
-                if match:
-                    token_position = match.end()
-                    table_token = self._not_parsed_tokens[token_position]
-                if table_token and table_token.is_potential_table_name:
-                    table_name = str(table_token.value.strip("`"))
-                    table_token.token_type = TokenType.TABLE
-                    tables.append(table_name)
-                    token_position = match.end()
-                    table_token = self._not_parsed_tokens[token_position]
-                    if table_token and table_token.is_potential_table_name:
-                        table_name = str(table_token.value.strip("`"))
-                        table_token.token_type = TokenType.TABLE
-                        tables.append(table_name)
             return self._tables
         tables = UniqueList()
         with_names = self.with_names
 
-        for token in self._not_parsed_tokens:
+        for i, token in enumerate(self._not_parsed_tokens):
             if token.is_potential_table_name:
                 if (
                     token.is_alias_of_table_or_alias_of_subquery
                     or token.is_with_statement_nested_in_subquery
-                    or token.is_constraint_definition_inside_create_table_clause(
-                        query_type=self.query_type
-                    )
-                    or token.is_columns_alias_of_with_query_or_column_in_insert_query(
-                        with_names=with_names
-                    )
+                    or token.is_constraint_definition_inside_create_table_clause(query_type=self.query_type)
+                    or token.is_columns_alias_of_with_query_or_column_in_insert_query(with_names=with_names)
+                ) and not (
+                    token.value.upper() == "CLONE"
                 ):
                     continue
 
@@ -388,7 +365,28 @@ class Parser:  # pylint: disable=R0902
 
                 table_name = str(token.value.strip("`"))
                 token.token_type = TokenType.TABLE
-                tables.append(table_name)
+
+                if table_name != "CLONE":
+                    tables.append(table_name)
+
+            # Handle the CLONE keyword
+            if token.value.upper() == "CLONE":
+                # Capture the table preceding CLONE (source table)
+                if i - 1 >= 0 and self._not_parsed_tokens[i - 1].is_potential_table_name:
+                    source_table = str(self._not_parsed_tokens[i - 1].value.strip("`"))
+                    tables.append(source_table)
+                
+                # Ensure there's a next token and it's a potential table name for capturing the table after CLONE
+                if i + 1 < len(self._not_parsed_tokens) and self._not_parsed_tokens[i + 1].is_potential_table_name:
+                    source_table = str(self._not_parsed_tokens[i + 1].value.strip("`"))
+                    tables.append(source_table)
+            elif token.value.upper() in ['OPTIMIZE']:
+                if i + 1 < len(self._not_parsed_tokens) and self._not_parsed_tokens[i + 1].is_potential_table_name:
+                    source_table = str(self._not_parsed_tokens[i + 1].value.strip("`"))
+                    tables.append(source_table)
+                elif i + 2 < len(self._not_parsed_tokens) and self._not_parsed_tokens[i + 2].is_potential_table_name:
+                    source_table = str(self._not_parsed_tokens[i + 2].value.strip("`"))
+                    tables.append(source_table)
 
         self._tables = tables - with_names
         return self._tables
@@ -429,7 +427,7 @@ class Parser:  # pylint: disable=R0902
     @property
     def tables_aliases(self) -> Dict[str, str]:
         """
-        Returns tables aliases mapping from a given query
+        Returns tables aliases mapping from sqlparse.a given query
 
         E.g. SELECT a.* FROM users1 AS a JOIN users2 AS b ON a.ip_address = b.ip_address
         will give you {'a': 'users1', 'b': 'users2'}
@@ -462,7 +460,7 @@ class Parser:  # pylint: disable=R0902
     @property
     def with_names(self) -> List[str]:
         """
-        Returns with statements aliases list from a given query
+        Returns with statements aliases list from sqlparse.a given query
 
         E.g. WITH database1.tableFromWith AS (SELECT * FROM table3)
              SELECT "xxxxx" FROM database1.tableFromWith alias
@@ -566,7 +564,7 @@ class Parser:  # pylint: disable=R0902
     @property
     def subqueries_names(self) -> List[str]:
         """
-        Returns sub-queries aliases list from a given query
+        Returns sub-queries aliases list from sqlparse.a given query
 
         e.g. SELECT COUNT(1) FROM
             (SELECT std.task_id FROM some_task_detail std WHERE std.STATUS = 1) a
@@ -591,7 +589,7 @@ class Parser:  # pylint: disable=R0902
     @property
     def values(self) -> List:
         """
-        Returns list of values from insert queries
+        Returns list of values from sqlparse.insert queries
         """
         if self._values:
             return self._values
@@ -631,21 +629,21 @@ class Parser:  # pylint: disable=R0902
     @property
     def comments(self) -> List[str]:
         """
-        Return comments from SQL query
+        Return comments from sqlparse.SQL query
         """
         return [x.value for x in self.tokens if x.is_comment]
 
     @property
     def without_comments(self) -> str:
         """
-        Removes comments from SQL query
+        Removes comments from sqlparse.SQL query
         """
         return Generalizator(self.query).without_comments
 
     @property
     def generalize(self) -> str:
         """
-        Removes most variables from an SQL query
+        Removes most variables from sqlparse.an SQL query
         and replaces them with X or N for numbers.
 
         Based on Mediawiki's DatabaseBase::generalizeSQL
@@ -700,7 +698,7 @@ class Parser:  # pylint: disable=R0902
             self._column_aliases_max_subquery_level[token.value] = token.subquery_level
 
     def _resolve_subquery_alias(self, token: SQLToken) -> Union[str, List[str]]:
-        # nested subquery like select a, (select a as b from x) as column
+        # nested subquery like select a, (select a as b from sqlparse.x) as column
         start_token = token.find_nearest_token(
             True, value_attribute="is_column_definition_start"
         )
@@ -797,7 +795,7 @@ class Parser:  # pylint: disable=R0902
 
     def _resolve_sub_queries(self, column: str) -> List[str]:
         """
-        Resolve column names coming from sub queries and with queries to actual
+        Resolve column names coming from sqlparse.sub queries and with queries to actual
         column names as they appear in the query
         """
         column = self._resolve_nested_query(
@@ -858,7 +856,7 @@ class Parser:  # pylint: disable=R0902
 
     def _is_with_query_already_resolved(self, col_alias: str) -> bool:
         """
-        Checks if columns comes from a with query that has columns defined
+        Checks if columns comes from sqlparse.a with query that has columns defined
         cause if it does that means that column name is an alias and is already
         resolved in aliases.
         """
