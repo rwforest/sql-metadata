@@ -366,7 +366,7 @@ class Parser:  # pylint: disable=R0902
                 table_name = str(token.value.strip("`"))
                 token.token_type = TokenType.TABLE
 
-                if table_name != "CLONE":
+                if table_name.upper() not in TABLE_ADJUSTMENT_KEYWORDS:
                     tables.append(table_name)
 
             # Handle the CLONE keyword

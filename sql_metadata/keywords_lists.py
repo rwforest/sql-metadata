@@ -31,6 +31,10 @@ TABLE_ADJUSTMENT_KEYWORDS = {
     "INTO",
     "UPDATE",
     "TABLE",
+    "CONVERT",
+    "GENERATE",
+    "OPTIMIZE",
+    "CLONE",
 }
 
 # next statement beginning after with statement
