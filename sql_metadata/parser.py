@@ -381,13 +381,13 @@ class Parser:  # pylint: disable=R0902
                     source_table = str(self._not_parsed_tokens[i + 1].value.strip("`"))
                     tables.append(source_table)
             elif token.value.upper() in ['OPTIMIZE']:
-                if i + 1 < len(self._not_parsed_tokens) and self._not_parsed_tokens[i + 1].is_potential_table_name:
-                    source_table = str(self._not_parsed_tokens[i + 1].value.strip("`"))
-                    tables.append(source_table)
-                elif i + 2 < len(self._not_parsed_tokens) and self._not_parsed_tokens[i + 2].is_potential_table_name:
-                    source_table = str(self._not_parsed_tokens[i + 2].value.strip("`"))
-                    tables.append(source_table)
-
+                # Skip the "table" keyword if present after "OPTIMIZE"
+                start_index = i + 1 if self._not_parsed_tokens[i + 1].value.upper() != "TABLE" else i + 2
+                for j in range(start_index, len(self._not_parsed_tokens)):
+                    if self._not_parsed_tokens[j].is_potential_table_name:
+                        source_table = str(self._not_parsed_tokens[j].value.strip("`"))
+                        tables.append(source_table)
+                        break
         self._tables = tables - with_names
         return self._tables
 
