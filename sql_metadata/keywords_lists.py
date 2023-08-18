@@ -35,6 +35,10 @@ TABLE_ADJUSTMENT_KEYWORDS = {
     "GENERATE",
     "OPTIMIZE",
     "CLONE",
+    "DESC",
+    "DESCRIBE",
+    "DETAIL",
+    "HISTORY",
 }
 
 # next statement beginning after with statement
@@ -134,6 +138,8 @@ SUPPORTED_QUERY_TYPES = {
     "REORG": QueryType.REORG,
     "OPTIMIZE": QueryType.OPTIMIZE,
     "VACUUM" : QueryType.VACUUM,
+    "DESCRIBE": QueryType.DESCRIBE,
+    "DESC": QueryType.DESC,
 }
 
 # all the keywords we care for - rest is ignored in assigning
@@ -150,4 +156,6 @@ RELEVANT_KEYWORDS = {
     "INDEX",
     "WITH",
     "WINDOW",
+    "HISTORY",
+    "DETAIL",
 }

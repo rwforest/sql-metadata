@@ -352,7 +352,7 @@ class Parser:  # pylint: disable=R0902
                     or token.is_constraint_definition_inside_create_table_clause(query_type=self.query_type)
                     or token.is_columns_alias_of_with_query_or_column_in_insert_query(with_names=with_names)
                 ) and not (
-                    token.value.upper() == "CLONE"
+                    token.value.upper() in ["CLONE", "DESC", "DESCRIBE", "VACUUM", "RESTORE"]
                 ):
                     continue
 
@@ -380,14 +380,17 @@ class Parser:  # pylint: disable=R0902
                 if i + 1 < len(self._not_parsed_tokens) and self._not_parsed_tokens[i + 1].is_potential_table_name:
                     source_table = str(self._not_parsed_tokens[i + 1].value.strip("`"))
                     tables.append(source_table)
-            elif token.value.upper() in ['OPTIMIZE']:
+
+            elif token.value.upper() in ['OPTIMIZE', 'VACUUM', 'RESTORE', 'DESC', 'DESCRIBE']:
+                flag = False
                 # Skip the "table" keyword if present after "OPTIMIZE"
-                start_index = i + 1 if self._not_parsed_tokens[i + 1].value.upper() != "TABLE" else i + 2
+                start_index = i + 1 if self._not_parsed_tokens[i + 1].value.upper() not in ["TABLE", "DETAIL", "HISTORY"] else i + 2
                 for j in range(start_index, len(self._not_parsed_tokens)):
                     if self._not_parsed_tokens[j].is_potential_table_name:
                         source_table = str(self._not_parsed_tokens[j].value.strip("`"))
                         tables.append(source_table)
                         break
+
         self._tables = tables - with_names
         return self._tables
 
