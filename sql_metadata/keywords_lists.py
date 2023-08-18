@@ -39,6 +39,9 @@ TABLE_ADJUSTMENT_KEYWORDS = {
     "DESCRIBE",
     "DETAIL",
     "HISTORY",
+    "VACUUM",
+    "CONVERT",
+    "DELTA",
 }
 
 # next statement beginning after with statement
@@ -105,7 +108,7 @@ class QueryType(str, Enum):
     DESC = "DESC",
     DRY_RUN = "DRY RUN",
     RETAIN = "RETAIN",
-    VACUUM = "VACUUM"
+    VACUUM = "VACUUM",
 
 
 class TokenType(str, Enum):
@@ -140,6 +143,7 @@ SUPPORTED_QUERY_TYPES = {
     "VACUUM" : QueryType.VACUUM,
     "DESCRIBE": QueryType.DESCRIBE,
     "DESC": QueryType.DESC,
+    "CONVERT": QueryType.CONVERT_TO_DELTA,
 }
 
 # all the keywords we care for - rest is ignored in assigning
@@ -158,4 +162,6 @@ RELEVANT_KEYWORDS = {
     "WINDOW",
     "HISTORY",
     "DETAIL",
+    "VACUUM",
+    "CONVERT",
 }
